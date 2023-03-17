@@ -45,20 +45,7 @@ import com.demonwav.mcdev.util.psiType
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
-import com.intellij.psi.CommonClassNames
-import com.intellij.psi.JavaPsiFacade
-import com.intellij.psi.JavaRecursiveElementVisitor
-import com.intellij.psi.PsiArrayType
-import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiForeachStatement
-import com.intellij.psi.PsiLambdaExpression
-import com.intellij.psi.PsiMethod
-import com.intellij.psi.PsiModifier
-import com.intellij.psi.PsiParameter
-import com.intellij.psi.PsiStatement
-import com.intellij.psi.PsiType
-import com.intellij.psi.PsiVariable
+import com.intellij.psi.*
 import com.intellij.psi.controlFlow.ControlFlow
 import com.intellij.psi.controlFlow.ControlFlowFactory
 import com.intellij.psi.controlFlow.ControlFlowInstructionVisitor
@@ -212,7 +199,7 @@ object LocalVariables {
                         val localsHere = this.locals[offset]
                             ?: arrayOfNulls<SourceLocalVariable>(variable.index + 1).also { this.locals[offset] = it }
                         localsHere[variable.index] = variable
-                        if (variable.type == PsiType.LONG || variable.type == PsiType.DOUBLE) {
+                        if (variable.type == PsiTypes.longType() || variable.type == PsiTypes.doubleType()) {
                             if (variable.index + 1 < localsHere.size) {
                                 localsHere[variable.index + 1] = null
                             }
@@ -303,15 +290,15 @@ object LocalVariables {
             is PsiVariable -> if (element.isDoubleSlot) 2 else 1
             // arrays have copy of array, length and index variables, iterables have the iterator variable
             is PsiForeachStatement -> {
-                val param = element.iterationDeclaration as? PsiParameter
-                if (param?.type is PsiArrayType) 3 else 1
+                val param = element.iterationParameter
+                if (param.type is PsiArrayType) 3 else 1
             }
             else -> 0
         }
     }
 
     private val PsiVariable.isDoubleSlot: Boolean
-        get() = type == PsiType.DOUBLE || type == PsiType.LONG
+        get() = type == PsiTypes.doubleType() || type == PsiTypes.longType()
 
     private fun PsiForeachStatement.getExtraLocals(): List<SourceLocalVariable> {
         val localIndex = getUserData(LOCAL_INDEX_KEY)!!
@@ -330,7 +317,7 @@ object LocalVariables {
                 // length
                 SourceLocalVariable(
                     "var${localIndex + 1}",
-                    PsiType.INT,
+                    PsiTypes.intType(),
                     localIndex + 1,
                     implicitStoreCountBefore = 1,
                     implicitLoadCountAfter = 1,
@@ -338,7 +325,7 @@ object LocalVariables {
                 // index
                 SourceLocalVariable(
                     "var${localIndex + 2}",
-                    PsiType.INT,
+                    PsiTypes.intType(),
                     localIndex + 2,
                     implicitStoreCountBefore = 1,
                     implicitLoadCountBefore = 1,

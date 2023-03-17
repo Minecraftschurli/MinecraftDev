@@ -20,21 +20,7 @@ import com.demonwav.mcdev.util.findModule
 import com.demonwav.mcdev.util.isErasureEquivalentTo
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.module.Module
-import com.intellij.psi.JavaPsiFacade
-import com.intellij.psi.JavaTokenType
-import com.intellij.psi.PsiAnnotation
-import com.intellij.psi.PsiAssignmentExpression
-import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiExpressionStatement
-import com.intellij.psi.PsiForeachStatement
-import com.intellij.psi.PsiParameter
-import com.intellij.psi.PsiPrimitiveType
-import com.intellij.psi.PsiReferenceExpression
-import com.intellij.psi.PsiThisExpression
-import com.intellij.psi.PsiType
-import com.intellij.psi.PsiUnaryExpression
-import com.intellij.psi.PsiVariable
+import com.intellij.psi.*
 import com.intellij.psi.util.PsiUtil
 import com.intellij.psi.util.parentOfType
 import org.objectweb.asm.Opcodes
@@ -140,10 +126,10 @@ abstract class AbstractLoadInjectionPoint(private val store: Boolean) : Injectio
                 val resolved = expression.resolve() as? PsiVariable ?: return
                 val type = resolved.type
                 if (type is PsiPrimitiveType &&
-                    type != PsiType.FLOAT &&
-                    type != PsiType.DOUBLE &&
-                    type != PsiType.LONG &&
-                    type != PsiType.BOOLEAN
+                    type != PsiTypes.floatType() &&
+                    type != PsiTypes.doubleType() &&
+                    type != PsiTypes.longType() &&
+                    type != PsiTypes.booleanType()
                 ) {
                     // ModifyVariable currently cannot handle iinc
                     val parentExpr = PsiUtil.skipParenthesizedExprUp(expression.parent)
@@ -180,7 +166,7 @@ abstract class AbstractLoadInjectionPoint(private val store: Boolean) : Injectio
         override fun visitForeachStatement(statement: PsiForeachStatement) {
             checkImplicitLocalsPre(statement)
             if (store) {
-                (statement.iterationDeclaration as? PsiParameter)?.let { param ->
+                statement.iterationParameter.let { param ->
                     addLocalUsage(param, param.name)
                 }
             }
@@ -275,9 +261,9 @@ abstract class AbstractLoadInjectionPoint(private val store: Boolean) : Injectio
             var opcode = when (info.type) {
                 null -> null
                 !is PsiPrimitiveType -> Opcodes.ALOAD
-                PsiType.LONG -> Opcodes.LLOAD
-                PsiType.FLOAT -> Opcodes.FLOAD
-                PsiType.DOUBLE -> Opcodes.DLOAD
+                PsiTypes.longType() -> Opcodes.LLOAD
+                PsiTypes.floatType() -> Opcodes.FLOAD
+                PsiTypes.doubleType() -> Opcodes.DLOAD
                 else -> Opcodes.ILOAD
             }
             if (store && opcode != null) {

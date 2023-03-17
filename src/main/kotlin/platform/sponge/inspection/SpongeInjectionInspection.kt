@@ -185,12 +185,14 @@ class SpongeInjectionInspection : AbstractBaseJavaLocalInspectionTool() {
                             }
                         }
 
-                        holder.registerProblem(
-                            assetPathAttributeValue,
-                            "Asset '$assetPath' does not exist.",
-                            ProblemHighlightType.GENERIC_ERROR,
-                            fix,
-                        )
+                        if (fix != null) {
+                            holder.registerProblem(
+                                assetPathAttributeValue,
+                                "Asset '$assetPath' does not exist.",
+                                ProblemHighlightType.GENERIC_ERROR,
+                                fix,
+                            )
+                        }
                     }
                 }
             }
